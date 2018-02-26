@@ -77,13 +77,24 @@ class TestDataMethods(unittest.TestCase):
         self.assertEqual(len(self.data_helper.batches), len(self.data_helper.labels))
         self.assertEqual(self.data_helper.batches[0].shape,(sequence_length,SAMPLE_UNIQUE_CHARS))
 
-    def test_textify(self):
+    def test_textify_labels_match_batches(self):
         self.data_helper.map_chars()
         sequence_length = 64
         self.data_helper.make_batches(sequence_length)
         batch_text = self.data_helper.textify(self.data_helper.batches[0])
         sample_text_batch0 = "Moe_Szyslak: (INTO PHONE) Moe's Tavern. Where the elite meet to "
         self.assertEqual(batch_text,sample_text_batch0)
+        label_text = self.data_helper.textify(self.data_helper.labels[0])
+        sample_text_label0 = "oe_Szyslak: (INTO PHONE) Moe's Tavern. Where the elite meet to d"
+        self.assertEqual(label_text, sample_text_label0)
+        batch_text = self.data_helper.textify(self.data_helper.batches[9])
+        sample_text_batch10 = "ou should not drink to forget your problems.\nBarney_Gumble: Yeah"
+        self.assertEqual(batch_text,sample_text_batch10)
+        label_text = self.data_helper.textify(self.data_helper.labels[9])
+        sample_text_label10 = "u should not drink to forget your problems.\nBarney_Gumble: Yeah,"
+        self.assertEqual(label_text, sample_text_label10)
+        
+
 
 if __name__ == '__main__':
     unittest.main()
