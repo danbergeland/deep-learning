@@ -19,77 +19,100 @@ ctx = mx.cpu(0)
 class DataHelper():
     def __init__(self, data_path):
         self.data_path = data_path
-        self.vocabToNum = {}
-        self.numToVocab = {}
+        self.vocab_to_num = {}
+        self.num_to_vocab = {}
         self.full_text = ''
         self.chars = []
         self.words = []
-        self.vocabSize = 0
+        self.vocab_size = 0
         self.batches = []
         self.labels = []
 
-    def loadText(self):
-        with open(self.data_path) as f:
-            self.full_text = f.read()
+    def load_text(self):
+        """loads text from connected .txt file"""
+        with open(self.data_path) as source_file:
+            self.full_text = source_file.read()
 
-    def fileToWordList(self):
-        self.loadText()
+    def file_to_word_list(self):
+        """loads and creates a unique set of words"""
+        self.load_text()
         modified_text = self.full_text.translate(str.maketrans(punctuation_translations))
         self.words = set(modified_text.split())
         return self.words
 
-    def fileToCharList(self):
-        self.loadText()
+    def file_to_char_list(self):
+        """loads and creates a unique set of characters"""
+        self.load_text()
         self.chars = set(list(self.full_text))
         return self.chars
 
-    def mapWords(self):
-        self.fileToWordList()
+    def map_words(self):
+        """Creates dictionaries for converting words to numeric integers"""
+        self.file_to_word_list()
         if self.words is not []:
-            self.vocabToNum = {c:int(i) for i,c in enumerate(self.words)}
-            self.numToVocab = {int(self.vocabToNum[vocab]):vocab for vocab in self.vocabToNum}
-            self.vocabSize = len(self.vocabToNum)
+            self.vocab_to_num = {c:int(i) for i,c in enumerate(self.words)}
+            self.num_to_vocab = {int(self.vocab_to_num[vocab]):vocab for vocab in self.vocab_to_num}
+            self.vocab_size = len(self.vocab_to_num)
 
-    def mapChars(self):
-        self.fileToCharList()
+    def map_chars(self):
+        """Creates dictionaries for converting individual chars to integers"""
+        self.file_to_char_list()
         if self.chars is not []:
-            self.vocabToNum = {c:int(i) for i,c in enumerate(self.chars)}
-            self.numToVocab = {int(self.vocabToNum[vocab]):vocab for vocab in self.vocabToNum}
-            self.vocabSize = len(self.vocabToNum)
+            self.vocab_to_num = {c:int(i) for i,c in enumerate(self.chars)}
+            self.num_to_vocab = {int(self.vocab_to_num[vocab]):vocab for vocab in self.vocab_to_num}
+            self.vocab_size = len(self.vocab_to_num)
     
-    def saveVocabMap(self, map_path):
+    def save_vocab_map(self, map_path):
+        """Creates JSON file for map (will save either word or char maps, 
+            based on the last use of map_chars or map_words)"""
         with open(map_path,'w') as output_file:
-            json.dump(self.vocabToNum, output_file)
+            json.dump(self.vocab_to_num, output_file)
 
-    def loadVocabMap(self, map_path):
+    def load_vocab_map(self, map_path):
+        """Loads saved JSON map (will load either chars or words to the 
+            conversion dictionaries based on the save file)"""
         with open(map_path) as input_file:
-            self.vocabToNum = json.load(input_file)
-            self.numToVocab = {int(self.vocabToNum[vocab]):vocab for vocab in self.vocabToNum}
-            self.vocabSize = len(self.vocabToNum)
+            self.vocab_to_num = json.load(input_file)
+            self.num_to_vocab = {int(self.vocab_to_num[vocab]):vocab for vocab in self.vocab_to_num}
+            self.vocab_size = len(self.vocab_to_num)
 
-    def convertVocabToNumeric(self, input_text=None):
-        if input_text == None:
+    def convert_vocab_to_numeric(self, input_text=None):
+        """For a text input, return a list of conversions to integers"""
+        if input_text is None:
             input_text = self.full_text
-        return  [self.vocabToNum[character] for character in input_text]
+        return  [self.vocab_to_num[character] for character in input_text]
 
-    def convertNumericToVocab(self, input_numbers):
-        return [self.numToVocab[num] for num in input_numbers]
+    def convert_numeric_to_vocab(self, input_numbers):
+        """For a list of integers, returns a list of vocab conversions"""
+        return [self.num_to_vocab[num] for num in input_numbers]
 
-    def oneHots(self, numerical_list):
-        result = nd.zeros((len(numerical_list),self.vocabSize), ctx)
+    def one_hots(self, numerical_list):
+        """Creates an ndarray of len(numerical_list) rows by vocab size columns with 1-hot embeddings"""
+        result = nd.zeros((len(numerical_list),self.vocab_size), ctx)
         for i, num in enumerate(numerical_list):
             result[i,num] = 1.0
         return result
 
-    def makeBatches(self, seqLength):
+    def textify(self, one_hot_NDArray):
+        """Returns a string from a one hot encoded array"""
+        result = ''
+        onehot_index = nd.argmax(one_hot_NDArray, axis=1).asnumpy()
+        for char_index in onehot_index:
+            result += self.num_to_vocab[char_index]
+        return result
+
+    def make_batches(self, sequence_length):
+        """Batches the .txt file at this.data_path as one-hot (stored in this.batches)
+            and creates one-hot labels (stored in this.labels)
+            The indices of batches and labels are matched."""
         batches = []
         labels = []
-        numeric_list=self.convertVocabToNumeric()
-        batchCount = len(numeric_list)//seqLength
-        for i in range(batchCount):
-            sequence = numeric_list[i*seqLength:((i+1)*seqLength)-1]
-            label_text = numeric_list[i*seqLength+1:((i+1)*seqLength)]
-            batches.append(self.oneHots(sequence))
-            labels.append(self.oneHots(label_text))
+        numeric_list=self.convert_vocab_to_numeric()
+        batch_count = len(numeric_list)//sequence_length
+        for i in range(batch_count):
+            sequence = numeric_list[i*sequence_length:((i+1)*sequence_length)]
+            label_text = numeric_list[i*sequence_length+1:((i+1)*sequence_length+1)]
+            batches.append(self.one_hots(sequence))
+            labels.append(self.one_hots(label_text))
         self.batches = batches
         self.labels = labels
