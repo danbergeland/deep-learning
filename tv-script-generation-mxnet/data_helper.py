@@ -12,12 +12,23 @@ punctuation_translations = {
     '(' : ' LEFTPAREN ',
     ')' : ' RIGHTPAREN ',
     '?' : ' QUESTIONMARK ',
+    ':' : ' COLON ',
+    ';' : ' SEMICOLON ',
 }
 
-ctx = mx.cpu(0)
+punctuation_textify = {
+    'PERIOD' : '.',
+    'COMMA' : ',',
+    'EXCLAMATION' : '!',
+    'LEFTPAREN' : '(',
+    'RIGHTPAREN' : ')',
+    'QUESTIONMARK' : '?',
+    'COLON' : ':',
+    'SEMICOLON' : ';',
+}
 
 class DataHelper():
-    def __init__(self, data_path):
+    def __init__(self, data_path, ctx=mx.cpu(0)):
         self.data_path = data_path
         self.vocab_to_num = {}
         self.num_to_vocab = {}
@@ -27,6 +38,7 @@ class DataHelper():
         self.vocab_size = 0
         self.batches = []
         self.labels = []
+        self.ctx = ctx
 
     def load_text(self):
         """loads text from connected .txt file"""
@@ -76,10 +88,12 @@ class DataHelper():
             self.num_to_vocab = {int(self.vocab_to_num[vocab]):vocab for vocab in self.vocab_to_num}
             self.vocab_size = len(self.vocab_to_num)
 
-    def convert_vocab_to_numeric(self, input_text=None):
+    def convert_vocab_to_numeric(self, input_text=None, word_embedding=False):
         """For a text input, return a list of conversions to integers"""
         if input_text is None:
             input_text = self.full_text
+        if word_embedding is True:
+            input_text = input_text.translate(str.maketrans(punctuation_translations)).split()
         return  [self.vocab_to_num[character] for character in input_text]
 
     def convert_numeric_to_vocab(self, input_numbers):
@@ -88,26 +102,33 @@ class DataHelper():
 
     def one_hots(self, numerical_list):
         """Creates an ndarray of len(numerical_list) rows by vocab size columns with 1-hot embeddings"""
-        result = nd.zeros((len(numerical_list),self.vocab_size), ctx)
+        result = nd.zeros((len(numerical_list),self.vocab_size), self.ctx)
         for i, num in enumerate(numerical_list):
             result[i,num] = 1.0
         return result
 
-    def textify(self, one_hot_NDArray):
+    def textify(self, one_hot_NDArray, word_embedding=False):
         """Returns a string from a one hot encoded array"""
         result = ''
         onehot_index = nd.argmax(one_hot_NDArray, axis=1).asnumpy()
         for char_index in onehot_index:
+            next_vocab = self.num_to_vocab[char_index]
+            if word_embedding:
+                if next_vocab in punctuation_textify:
+                    result += punctuation_textify[next_vocab]
+                    continue
+                result += ' ' + next_vocab
+                continue
             result += self.num_to_vocab[char_index]
         return result
 
-    def make_batches(self, sequence_length):
+    def make_batches(self, sequence_length, word_embedding=False):
         """Batches the .txt file at this.data_path as one-hot (stored in this.batches)
             and creates one-hot labels (stored in this.labels)
             The indices of batches and labels are matched."""
         batches = []
         labels = []
-        numeric_list=self.convert_vocab_to_numeric()
+        numeric_list=self.convert_vocab_to_numeric(word_embedding=word_embedding)
         batch_count = len(numeric_list)//sequence_length
         for i in range(batch_count):
             sequence = numeric_list[i*sequence_length:((i+1)*sequence_length)]

@@ -6,7 +6,7 @@ from mxnet import nd
 
 data_path = "data/sample_text.txt"
 charMapPath = "data/testCharMap.json"
-SAMPLE_UNIQUE_WORDS = 83
+SAMPLE_UNIQUE_WORDS = 84
 SAMPLE_UNIQUE_CHARS = 50
 SAMPLE_LENGTH_CHARS = 695
 
@@ -77,7 +77,7 @@ class TestDataMethods(unittest.TestCase):
         self.assertEqual(len(self.data_helper.batches), len(self.data_helper.labels))
         self.assertEqual(self.data_helper.batches[0].shape,(sequence_length,SAMPLE_UNIQUE_CHARS))
 
-    def test_textify_labels_match_batches(self):
+    def test_textify_labels_match_batches_char(self):
         self.data_helper.map_chars()
         sequence_length = 64
         self.data_helper.make_batches(sequence_length)
@@ -94,7 +94,22 @@ class TestDataMethods(unittest.TestCase):
         sample_text_label10 = "u should not drink to forget your problems.\nBarney_Gumble: Yeah,"
         self.assertEqual(label_text, sample_text_label10)
         
-
+    def test_textify_labels_match_batches_word(self):
+        self.data_helper.map_words()
+        sequence_length = 10
+        self.data_helper.make_batches(sequence_length,word_embedding=True)
+        batch_text = self.data_helper.textify(self.data_helper.batches[0],word_embedding=True)
+        sample_text_batch0 = " Moe_Szyslak:( INTO PHONE) Moe's Tavern. Where"
+        self.assertEqual(batch_text,sample_text_batch0)
+        label_text = self.data_helper.textify(self.data_helper.labels[0],word_embedding=True)
+        sample_text_label0 = ":( INTO PHONE) Moe's Tavern. Where the"
+        self.assertEqual(label_text, sample_text_label0)
+        batch_text = self.data_helper.textify(self.data_helper.batches[9],word_embedding=True)
+        sample_text_batch10 = " name on your back with an ice pick. Moe_Szyslak"
+        self.assertEqual(batch_text,sample_text_batch10)
+        label_text = self.data_helper.textify(self.data_helper.labels[9],word_embedding=True)
+        sample_text_label10 = " on your back with an ice pick. Moe_Szyslak:"
+        self.assertEqual(label_text, sample_text_label10)
 
 if __name__ == '__main__':
     unittest.main()
