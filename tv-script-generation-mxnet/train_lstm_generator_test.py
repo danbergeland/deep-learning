@@ -16,10 +16,10 @@ class TestTrainLSTMGen(unittest.TestCase):
         self.dataloader = mx.gluon.data.DataLoader(self.batcher, batch_size,True)
         self.net = train_lstm_generator.makeLSTMmodel(self.batcher.vocab_size)
 
-    def test_forward_pass_LSTM(self):
+    def test_forward_pass_LSTM_matches_label_shape(self):
         for (data,label) in self.dataloader:
             output = self.net(data)
             self.assertEqual(output.shape,label.shape)
 
     def test_train_model(self):
-        train_lstm_generator.train(self.net,self.batcher,2,.001,1,1)
+        train_lstm_generator.train(self.net,self.batcher,batch_size,.001,1)
