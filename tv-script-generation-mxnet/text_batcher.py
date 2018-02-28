@@ -48,7 +48,7 @@ class TextBatcher(mx.gluon.data.Dataset):
             return IndexError
 
     def __len__(self):
-        """Required ovverid for gluon.dataset"""
+        """Required override for gluon.dataset"""
         return len(self.batches)
 
     def load_text(self):

@@ -6,6 +6,7 @@ from mxnet import gluon
 from mxnet import ndarray as nd
 import random
 import text_batcher
+import time
 
 mx.random.seed(1)
 random.seed(1)
@@ -30,6 +31,8 @@ def train(net, dataset, batch_size, lr, epochs):
             loss.backward()
             trainer.step(batch_size)
             avg_loss = nd.sum(loss)
+        savepath = "checkpoints/moes_gen_epoch_"+str(epoch)+"_"+str(time.ctime()).replace(' ','_')
+        net.collect_params().save(savepath)
 
 def makeLSTMmodel(vocab_size,hidden_size=256, LSTM_layers=1):
     model = mx.gluon.nn.Sequential()
@@ -45,8 +48,14 @@ if __name__ == '__main__':
     learning_rate = .001
     epochs = 10
     batcher = text_batcher.TextBatcher('data/moes_tavern_lines.txt')
-    batcher.map_chars()
+    try:
+        batcher.load_vocab_map('data/moes_text_gen.json')
+    except FileNotFoundError:
+        batcher.map_chars()
+        batcher.save_vocab_map('data/moes_text_gen.json')
     batcher.make_batches(sequence_length)
     dataloader = mx.gluon.data.DataLoader(batcher, batch_size,True)
     net = makeLSTMmodel(batcher.vocab_size)
     train(net,batcher,batch_size,learning_rate,epochs)
+    
+    

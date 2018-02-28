@@ -22,4 +22,5 @@ class TestTrainLSTMGen(unittest.TestCase):
             self.assertEqual(output.shape,label.shape)
 
     def test_train_model(self):
+        #No assert because calling train should not result in errors
         train_lstm_generator.train(self.net,self.batcher,batch_size,.001,1)
