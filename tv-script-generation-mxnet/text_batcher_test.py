@@ -2,6 +2,7 @@
 
 import unittest
 import text_batcher as tb
+import mxnet as mx
 from mxnet import nd
 
 data_path = "data/sample_text.txt"
@@ -110,6 +111,18 @@ class TestDataMethods(unittest.TestCase):
         label_text = self.data_helper.textify(self.data_helper.labels[9],word_embedding=True)
         sample_text_label10 = " on your back with an ice pick. Moe_Szyslak:"
         self.assertEqual(label_text, sample_text_label10)
+
+    def test_batcher_works_as_gluon_dataset(self):
+        self.data_helper.map_words()
+        sequence_length = 12
+        self.data_helper.make_batches(sequence_length,word_embedding=True)
+        dataloader = mx.gluon.data.DataLoader(self.data_helper,1, last_batch='discard')
+        for i, data in enumerate(dataloader):
+            self.assertEqual(data[0].__class__,mx.ndarray.ndarray.NDArray)        
+            self.assertEqual(data[1].__class__,mx.ndarray.ndarray.NDArray)
+            self.assertEqual(data[0].shape, (1,12,84)) 
+            self.assertEqual(data[1].shape, (1,12,84))
+        self.assertEqual(len(dataloader),12)        
 
 if __name__ == '__main__':
     unittest.main()

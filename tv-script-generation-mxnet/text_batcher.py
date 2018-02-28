@@ -43,7 +43,7 @@ class TextBatcher(mx.gluon.data.Dataset):
     def __getitem__(self, key):
         """Required override for gluon.dataset"""
         try:
-            return self.batches[key], self.labels[key]
+            return (self.batches[key], self.labels[key])
         except IndexError:
             return IndexError
 
@@ -144,7 +144,8 @@ class TextBatcher(mx.gluon.data.Dataset):
         for i in range(batch_count):
             sequence = numeric_list[i*sequence_length:((i+1)*sequence_length)]
             label_text = numeric_list[i*sequence_length+1:((i+1)*sequence_length+1)]
-            batches.append(self.one_hots(sequence))
-            labels.append(self.one_hots(label_text))
+            if(len(sequence)==len(label_text)):
+                batches.append(self.one_hots(sequence))
+                labels.append(self.one_hots(label_text))
         self.batches = batches
         self.labels = labels

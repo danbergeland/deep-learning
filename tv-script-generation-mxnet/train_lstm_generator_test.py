@@ -2,7 +2,6 @@
 
 import unittest
 import train_lstm_generator
-import network_builder
 import text_batcher
 
 batch_size = 6
@@ -13,7 +12,7 @@ class TestTrainLSTMGen(unittest.TestCase):
         self.batcher = text_batcher.TextBatcher('data/sample_text.txt')
         self.batcher.map_chars()
         self.batcher.make_batches(sequence_length)
-        self.net = network_builder.makeLSTMmodel(self.batcher.vocab_size)
+        self.net = train_lstm_generator.makeLSTMmodel(self.batcher.vocab_size)
 
     def test_train(self):
         train_lstm_generator.train(self.net,self.batcher,batch_size,.001,1,batch_size*2)
