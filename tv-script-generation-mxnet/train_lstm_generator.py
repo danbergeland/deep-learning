@@ -23,7 +23,7 @@ def train(net, dataset, batch_size, lr, epochs, period):
               (batch_size, trainer.learning_rate, epoch))
         if epoch > 1:
             print("average loss: %f" % avg_loss)
-        for batch_i, (data, label) in enumerate(data_iter):
+        for (data, label) in data_iter:
             with autograd.record():
                 output = net(data)
                 loss = average_ce_loss(output, label)
@@ -31,10 +31,9 @@ def train(net, dataset, batch_size, lr, epochs, period):
             trainer.step(batch_size)
             avg_loss = loss
 
-def makeLSTMmodel(vocab_size, embedded_features=64,hidden_size=256, LSTM_layers=1):
+def makeLSTMmodel(vocab_size,hidden_size=256, LSTM_layers=1):
     model = mx.gluon.nn.Sequential()
     with model.name_scope():
-        model.add(mx.gluon.nn.Embedding(vocab_size, embedded_features))
         model.add(mx.gluon.rnn.LSTM(hidden_size,num_layers=LSTM_layers))
         model.add(mx.gluon.nn.Dense(vocab_size, flatten=False))
     model.initialize()
