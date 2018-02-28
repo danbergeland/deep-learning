@@ -4,10 +4,8 @@ import mxnet as mx
 from mxnet import autograd
 from mxnet import gluon
 from mxnet import ndarray as nd
-import numpy as np
 import random
 import text_batcher
-import network_builder
 
 mx.random.seed(1)
 random.seed(1)
@@ -23,7 +21,7 @@ def train(net, dataset, batch_size, lr, epochs, period):
     for epoch in range(1, epochs + 1):
         print("Batch size %d, Learning rate %f, Epoch %d" %
               (batch_size, trainer.learning_rate, epoch))
-        if epoch < 1:
+        if epoch > 1:
             print("average loss: %f" % avg_loss)
         for batch_i, (data, label) in enumerate(data_iter):
             with autograd.record():
