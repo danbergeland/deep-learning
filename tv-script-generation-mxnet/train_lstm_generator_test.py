@@ -20,3 +20,6 @@ class TestTrainLSTMGen(unittest.TestCase):
         for (data,label) in self.dataloader:
             output = self.net(data)
             self.assertEqual(output.shape,label.shape)
+
+    def test_train_model(self):
+        train_lstm_generator.train(self.net,self.batcher,2,.001,1,1)
