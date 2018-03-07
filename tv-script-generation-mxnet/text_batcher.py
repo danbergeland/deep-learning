@@ -46,6 +46,8 @@ class TextBatcher(mx.gluon.data.Dataset):
             return (self.batches[key], self.labels[key])
         except IndexError:
             return IndexError
+        except KeyError:
+            return KeyError
 
     def __len__(self):
         """Required override for gluon.dataset"""
@@ -133,7 +135,7 @@ class TextBatcher(mx.gluon.data.Dataset):
             result += self.num_to_vocab[char_index]
         return result
 
-    def make_batches(self, sequence_length, word_embedding=False):
+    def make_batches(self, sequence_length,one_hot=False, word_embedding=False):
         """Batches the .txt file at this.data_path as one-hot (stored in this.batches)
             and creates one-hot labels (stored in this.labels)
             The indices of batches and labels are matched."""
@@ -145,7 +147,11 @@ class TextBatcher(mx.gluon.data.Dataset):
             sequence = numeric_list[i*sequence_length:((i+1)*sequence_length)]
             label_text = numeric_list[i*sequence_length+1:((i+1)*sequence_length+1)]
             if(len(sequence)==len(label_text)):
-                batches.append(self.one_hots(sequence))
-                labels.append(self.one_hots(label_text))
+                if one_hot is True:
+                    batches.append(self.one_hots(sequence))
+                    labels.append(self.one_hots(label_text))
+                else:
+                    batches.append(nd.array(sequence,self.ctx))
+                    batches.append(nd.array(labels, self.ctx))
         self.batches = batches
         self.labels = labels

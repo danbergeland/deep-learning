@@ -73,7 +73,7 @@ class TestDataMethods(unittest.TestCase):
     def test_makeBatches(self):
         self.data_helper.map_chars()
         sequence_length = 64
-        self.data_helper.make_batches(sequence_length)
+        self.data_helper.make_batches(sequence_length, one_hot=True)
         self.assertEqual(len(self.data_helper.batches),SAMPLE_LENGTH_CHARS//sequence_length)
         self.assertEqual(len(self.data_helper.batches), len(self.data_helper.labels))
         self.assertEqual(self.data_helper.batches[0].shape,(sequence_length,SAMPLE_UNIQUE_CHARS))
@@ -81,7 +81,7 @@ class TestDataMethods(unittest.TestCase):
     def test_textify_labels_match_batches_char(self):
         self.data_helper.map_chars()
         sequence_length = 64
-        self.data_helper.make_batches(sequence_length)
+        self.data_helper.make_batches(sequence_length, one_hot=True)
         batch_text = self.data_helper.textify(self.data_helper.batches[0])
         sample_text_batch0 = "Moe_Szyslak: (INTO PHONE) Moe's Tavern. Where the elite meet to "
         self.assertEqual(batch_text,sample_text_batch0)
@@ -98,7 +98,7 @@ class TestDataMethods(unittest.TestCase):
     def test_textify_labels_match_batches_word(self):
         self.data_helper.map_words()
         sequence_length = 10
-        self.data_helper.make_batches(sequence_length,word_embedding=True)
+        self.data_helper.make_batches(sequence_length,one_hot=True,word_embedding=True)
         batch_text = self.data_helper.textify(self.data_helper.batches[0],word_embedding=True)
         sample_text_batch0 = " Moe_Szyslak:( INTO PHONE) Moe's Tavern. Where"
         self.assertEqual(batch_text,sample_text_batch0)
@@ -112,7 +112,19 @@ class TestDataMethods(unittest.TestCase):
         sample_text_label10 = " on your back with an ice pick. Moe_Szyslak:"
         self.assertEqual(label_text, sample_text_label10)
 
-    def test_batcher_works_as_gluon_dataset(self):
+    def test_batcher_works_as_gluon_dataset_onehot(self):
+        self.data_helper.map_words()
+        sequence_length = 12
+        self.data_helper.make_batches(sequence_length,one_hot=True,word_embedding=True)
+        dataloader = mx.gluon.data.DataLoader(self.data_helper,1, last_batch='discard')
+        for i, data in enumerate(dataloader):
+            self.assertEqual(data[0].__class__,mx.ndarray.ndarray.NDArray)        
+            self.assertEqual(data[1].__class__,mx.ndarray.ndarray.NDArray)
+            self.assertEqual(data[0].shape, (1,12,84)) 
+            self.assertEqual(data[1].shape, (1,12,84))
+        self.assertEqual(len(dataloader),12)      
+
+    def test_batcher_works_as_gluon_dataset_sparse(self):
         self.data_helper.map_words()
         sequence_length = 12
         self.data_helper.make_batches(sequence_length,word_embedding=True)
@@ -120,9 +132,9 @@ class TestDataMethods(unittest.TestCase):
         for i, data in enumerate(dataloader):
             self.assertEqual(data[0].__class__,mx.ndarray.ndarray.NDArray)        
             self.assertEqual(data[1].__class__,mx.ndarray.ndarray.NDArray)
-            self.assertEqual(data[0].shape, (1,12,84)) 
-            self.assertEqual(data[1].shape, (1,12,84))
-        self.assertEqual(len(dataloader),12)        
+            self.assertEqual(data[0].shape, (1,12,1)) 
+            self.assertEqual(data[1].shape, (1,12,1))
+        self.assertEqual(len(dataloader),12)  
 
 if __name__ == '__main__':
     unittest.main()
