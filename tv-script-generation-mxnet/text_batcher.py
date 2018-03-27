@@ -61,6 +61,7 @@ class TextBatcher(mx.gluon.data.Dataset):
     def file_to_word_list(self):
         """loads and creates a unique set of words"""
         self.load_text()
+        self.full_text = self.full_text.lower()
         modified_text = self.full_text.translate(str.maketrans(punctuation_translations))
         self.words = set(modified_text.split())
         return self.words
@@ -68,6 +69,7 @@ class TextBatcher(mx.gluon.data.Dataset):
     def file_to_char_list(self):
         """loads and creates a unique set of characters"""
         self.load_text()
+        self.full_text = self.full_text.lower()
         self.chars = set(list(self.full_text))
         return self.chars
 
@@ -75,7 +77,7 @@ class TextBatcher(mx.gluon.data.Dataset):
         """Creates dictionaries for converting words to numeric integers"""
         self.file_to_word_list()
         if self.words is not []:
-            self.vocab_to_num = {c:int(i) for i,c in enumerate(self.words)}
+            self.vocab_to_num = {c:int(i) for i, c in enumerate(self.words)}
             self.num_to_vocab = {int(self.vocab_to_num[vocab]):vocab for vocab in self.vocab_to_num}
             self.vocab_size = len(self.vocab_to_num)
 
@@ -83,7 +85,7 @@ class TextBatcher(mx.gluon.data.Dataset):
         """Creates dictionaries for converting individual chars to integers"""
         self.file_to_char_list()
         if self.chars is not []:
-            self.vocab_to_num = {c:int(i) for i,c in enumerate(self.chars)}
+            self.vocab_to_num = {c:int(i) for i, c in enumerate(self.chars)}
             self.num_to_vocab = {int(self.vocab_to_num[vocab]):vocab for vocab in self.vocab_to_num}
             self.vocab_size = len(self.vocab_to_num)
     
